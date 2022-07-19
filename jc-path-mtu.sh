@@ -13,7 +13,7 @@ minmtu=500
 overhead=28
 rx_timeout='^([0-9]?)(\.([0-9])?|\.[0-9][0-9]?)$'
 
-# If 3rd timeout parameter is specified, validate it with a regular expression and set the variable, otherwise set the default
+# If 3rd timeout argument is specified, validate it with regex, set the default upon failure
 if [[ -z "${3}" ]]; then
 	timeout=0.1
 else
