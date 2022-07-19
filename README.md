@@ -1,5 +1,5 @@
 # jc-path-mtu
-Bash script to find the MTU of a remote host, outputs to JSON, conceptually designed for Zabbix or to run as a script on a monitoring server. It requires ICMP connectivity, jq, and jc. Sends JSON output to stdout, errors to stderr, expects jc to be located in /usr/local/bin/jc.
+Bash script to find the MTU of a remote host, outputs to JSON, conceptually designed for Zabbix or to run as a script on a monitoring server. It requires ICMP connectivity, jq, and jc. Sends JSON output to stdout, errors to stderr, expects jc to be located in /usr/local/bin/jc or /usr/bin/jc.
 
 # Usage
 ```
