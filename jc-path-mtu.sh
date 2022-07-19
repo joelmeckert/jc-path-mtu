@@ -29,15 +29,27 @@ rx_mtu='^[0-9]{3,4}$'
 
 remote="${1}"
 jcpath="/usr/local/bin/jc"
+jcpath2="/usr/local/bin/jc"
 jcuri='https://github.com/kellyjonbrazil/jc'
+jqpath="/usr/bin/jq"
+jquri='https://github.com/stedolan/jq'
 
 # Test to determine that jc is installed to parse the ping output, then determine if the host is reachable with ICMP
-if [[ -f "${jcpath}" ]]; then
+if [[ -f "${jcpath}" ]] && [[ -f "${jqpath}" ]]; then
 	# Determine if the remote host is responsive, useful for validating input
 	respond=$(ping -c 1 "${remote}" -W $timeout | jc --ping -p | jq .packets_received)
 else
 	# Output to stderr
-	echo -e "\e[31m\e[1mERROR: \e[37mjc not found at ${jcpath}\n\e[34m\e[4m${jcuri}\e[0m" >&2
+	if [[ ! -f "${jcpath}" ]]; then
+		if [[ -f "${jcpath2}" ]]; then
+			jcpath="${jcpath2}"
+		else
+			echo -e "\e[31m\e[1mERROR: \e[37mjc not found at ${jcpath}\n\e[34m\e[4m${jcuri}\e[0m" >&2
+		fi
+	fi
+	if [[ ! -f "${jqpath}" ]]; then
+		echo -e "\e[31m\e[1mERROR: \e[37mjq not found at ${jqpath}\n\e[34m\e[4m${jquri}\e[0m" >&2
+	fi
 fi
 
 # If the host responds to ICMP, proceed with the tests
@@ -74,6 +86,9 @@ else
 
 	# Return a zero integer value for the MTU
 	json=$(echo -e '{'"\n"'  "mtu": 0'"\n"'}'"\n")
-	echo $json | jq
-
+	if [[ -f "${jqpath}" ]]; then
+		echo $json | jq
+	else
+		echo -e $json
+	fi
 fi
