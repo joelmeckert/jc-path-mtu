@@ -1,5 +1,5 @@
 # jc-path-mtu
-Find MTU, requires ICMP and jc package
+Find MTU, requires ICMP and jc package. I had attempted to use nmap, but some providers block ICMP types other than echo requests.
 
 # Usage:
 ./jc-path-mtu.sh contoso.com
