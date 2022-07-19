@@ -67,4 +67,13 @@ if [[ $respond -gt 0 ]]; then
 	json=$(echo -e '{'"\n"'  "mtu": '"${mtu}\n"'}'"\n")
 	echo $json | jq
 
+else
+	
+	# Output error to stderr, failed to discover MTU
+	echo -e "\e[31m\e[1mERROR: \e[37mMTU discovery failed, ICMP echo reply blocked or hostname / IP is invalid.\e[0m" >&2
+
+	# Return a zero integer value for the MTU
+	json=$(echo -e '{'"\n"'  "mtu": 0'"\n"'}'"\n")
+	echo $json | jq
+
 fi
