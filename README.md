@@ -1,7 +1,5 @@
 # jc-path-mtu
-Find the MTU of a remote host, outputs to JSON, conceptually designed for Zabbix or to run as a script on a monitoring server.
-
-It requires ICMP connectivity and jc package. I had attempted to use nmap, but some providers block ICMP types other than echo requests.
+Bash script to find the MTU of a remote host, outputs to JSON, conceptually designed for Zabbix or to run as a script on a monitoring server. It requires ICMP connectivity and jc package.
 
 # Usage:
 ./jc-path-mtu.sh contoso.com
@@ -11,3 +9,6 @@ It requires ICMP connectivity and jc package. I had attempted to use nmap, but s
 
 # Dependencies:
 https://github.com/kellyjonbrazil/jc
+
+# Notes:
+I had attempted to use nmap, but some providers block ICMP types other than echo requests.
