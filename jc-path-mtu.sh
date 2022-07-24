@@ -37,38 +37,30 @@ rx_mtu='^[0-9]{3,4}$'
 # Remote host
 host="${1}"
 
-# Determines the location of jq, if it exists, sets the path to the jqpath variable
-if [[ -f "${jqsearchpath1}" ]]; then
-	jqpath="${jqsearchpath1}"
-fi
-if [[ -f "${jqsearchpath2}" ]]; then
-	jqpath="${jqsearchpath2}"
-fi
-
+# Determines the location of jc, if it exists, sets the path to the jqpath variable
 jcpath=$(which jc)
-jqpath=$(which jq)
-
-# Test to determine that jc and jq are installed to parse the ping output, then determine if the host is reachable
-if [[ -f "${jcpath}" ]] && [[ -f "${jqpath}" ]]; then
-	# Determine if the remote host is reachable via ICMP, useful for validating host input
-	attempts=2
-	bytes=56
-	result=$(ping -c $attempts -M do -s $bytes -W $timeout "${host}" | jc --ping -p | jq)
-	egress=$(echo "${result}" | jq .packets_transmitted)
-	ingress=$(echo "${result}" | jq .packets_received)
-	lost=$(($egress - $ingress))
-else
-	# Output to stderr if jc and jq do not exist
-	if [[ ! -f "${jcpath}" ]]; then
-		echo -e "\e[31m\e[1mERROR\e[0m\t\e[4mjc not found\e[0m at \e[1m${jcsearchpath1}\e[0m \e[33mor\e[0m \e[1m${jcsearchpath2}\e[0m\n\e[1mLink\t\e[34m\e[4m${jcuri}\e[0m" >&2
-	fi
-	if [[ ! -f "${jqpath}" ]]; then
-		echo -e "\e[31m\e[1mERROR\e[0m\t\e[4mjq not found\e[0m at \e[1m${jqsearchpath1}\e[0m \e[33mor\e[0m \e[1m${jqsearchpath2}\e[0m\n\e[1mLink\t\e[34m\e[4m${jquri}\e[0m" >&2
-	fi
+if [[ $? -ne 0 ]]; then
+	echo -e "\e[31m\e[1mERROR\e[0m\t\e[4mjc not found\e[0m at \e[1m${jcsearchpath1}\e[0m \e[33mor\e[0m \e[1m${jcsearchpath2}\e[0m\n\e[1mLink\t\e[34m\e[4m${jcuri}\e[0m" >&2
+	exit 1
 fi
+
+# Determines the location of jq, if it exists, sets the path to the jqpath variable
+jqpath=$(which jq)
+if [[ $? -ne 0 ]]; then
+	echo -e "\e[31m\e[1mERROR\e[0m\t\e[4mjq not found\e[0m at \e[1m${jqsearchpath1}\e[0m \e[33mor\e[0m \e[1m${jqsearchpath2}\e[0m\n\e[1mLink\t\e[34m\e[4m${jquri}\e[0m" >&2
+	exit 1
+fi
+
+# Determine if the host is reachable via ICMP
+attempts=2
+bytes=56
+result=$(ping -c $attempts -M do -s $bytes -W $timeout "${host}" | jc --ping -p | jq)
+egress=$(echo "${result}" | jq .packets_transmitted)
+ingress=$(echo "${result}" | jq .packets_received)
+lost=$(($egress - $ingress))
 
 # If the host responds to ICMP, proceed with the tests
-if [[ $lost == 0 ]]; then
+if [[ $lost -eq 0 ]]; then
 
 	# If MTU is specified as the second argument, calculate overhead, if not specified, calculate overhead based on max MTU
 	if [[ -n $2 ]] && [[ $2 =~ $rx_mtu ]] && [[ $2 < $mtu_maximum ]]; then
@@ -144,9 +136,4 @@ datetime=$(date -d @$epoch +"%Y-%m-%dT%T%:z")
 json=$(echo -e '{'"\n\t"'"date": "'$datetime'"'",\n\t"'"host": "'$host'"'",\n\t"'"mtu": '"$mtu,\n\t"'"timeout": '"$timeout,\n\t"'"epoch": '"$epoch\n"'}'"\n")
 
 # Output to stdout via jq
-if [[ -f "${jqpath}" ]]; then
-	echo "${json}" | jq
-# Output to stdout, jq missing
-else
-	echo -e "${json}"
-fi
+echo "${json}" | jq
