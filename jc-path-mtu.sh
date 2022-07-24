@@ -11,6 +11,7 @@
 mtu_maximum=1500
 mtu_minimum=500
 overhead=28
+bytes_minimum=$(( $mtu_minimum + $overhead ))
 timeout_minimum=0.02
 timeout_default=0.1
 rx_timeout='^([0-9]?)?(\.([0-9])?|\.[0-9][0-9]?)$'
@@ -36,26 +37,6 @@ rx_mtu='^[0-9]{3,4}$'
 # Remote host
 host="${1}"
 
-# Search paths for jc, prefer path2
-jcsearchpath1="/usr/bin/jc"
-jcsearchpath2="/usr/local/bin/jc"
-# Link to jc GitHub
-jcuri='https://github.com/kellyjonbrazil/jc'
-
-# Search paths for jq, prefer path2
-jqsearchpath1="/usr/bin/jq"
-jqsearchpath2="/usr/local/bin/jq"
-# Link to jq GitHub
-jquri='https://github.com/stedolan/jq'
-
-# Determines the location of jc, if it exists, sets the path to the jcpath variable
-if [[ -f "${jcsearchpath1}" ]]; then
-	jcpath="${jcsearchpath1}"
-fi
-if [[ -f "${jcsearchpath2}" ]]; then
-	jcpath="${jcsearchpath2}"
-fi
-
 # Determines the location of jq, if it exists, sets the path to the jqpath variable
 if [[ -f "${jqsearchpath1}" ]]; then
 	jqpath="${jqsearchpath1}"
@@ -63,6 +44,9 @@ fi
 if [[ -f "${jqsearchpath2}" ]]; then
 	jqpath="${jqsearchpath2}"
 fi
+
+jcpath=$(which jc)
+jqpath=$(which jq)
 
 # Test to determine that jc and jq are installed to parse the ping output, then determine if the host is reachable
 if [[ -f "${jcpath}" ]] && [[ -f "${jqpath}" ]]; then
@@ -92,23 +76,23 @@ if [[ $lost == 0 ]]; then
 	else
 		bytes=$(($mtu_maximum - $overhead))
 	fi
-	
+
 	# Set packets lost to 1
 	lost=1
-	
+
 	# Loop until there is an ICMP response, decrementing by one byte each loop where required
-	while [[ $lost -gt 0 ]] && [[ $bytes -ge $mtu_minimum ]]; do
+	while [[ $lost -gt 0 ]] && [[ $bytes -ge $bytes_minimum ]]; do
 
 		attempts=1
 		result=$(ping -c $attempts -M do -s $bytes -W $timeout "${host}" | jc --ping -p | jq)
 		egress=$(echo "${result}" | jq .packets_transmitted)
 		ingress=$(echo "${result}" | jq .packets_received)
 		lost=$(($egress - $ingress))
-		
+
 		# If there is packet loss, decrement by one byte
 		if [[ $lost -gt 0 ]]; then
 			bytes=$(($bytes - 1))
-			
+
 		# If single echo is successful, test for two echo replies, packet loss should be zero
 		else
 			attempts=2
@@ -116,7 +100,7 @@ if [[ $lost == 0 ]]; then
 			egress=$(echo "${result}" | jq .packets_transmitted)
 			ingress=$(echo "${result}" | jq .packets_received)
 			lost=$(($egress - $ingress))
-			
+
 			# If there is packet loss, decrement by one byte
 			if [[ $lost -gt 0 ]]; then
 				bytes=$(($bytes - 1))
@@ -128,7 +112,7 @@ if [[ $lost == 0 ]]; then
 		fi
 
 	done
-	
+
 	# If successful above, calculate the MTU, if it failed, return a zero integer value
 	if [[ $success -eq 1 ]]; then
 		# Calculate MTU from ICMP size
@@ -140,11 +124,11 @@ if [[ $lost == 0 ]]; then
 
 # Output error to stderr, failed to discover MTU, if jcpath and jqpath exist and processing could continue
 else
-	
+
 	if [[ -f "${jcpath}" ]] && [[ -f "${jqpath}" ]]; then
 		echo -e "\e[31m\e[1mERROR\e[0m\tMTU discovery failed for host, ICMP echo reply blocked or address is invalid:\t${host}\e[0m" >&2
 	fi
-	
+
 fi
 
 # If the epoch variable is not set, as the test was not successful, set it now
