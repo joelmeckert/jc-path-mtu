@@ -1,4 +1,6 @@
 #!/bin/bash
+
+# This code is licensed under MIT license (see LICENSE for details)
 # Joel Eckert, joel@joelme.ca, 2022-08-07
 
 # Usage, JSON output:
@@ -32,26 +34,35 @@ rx_mtu='^(([1][0-4][0-9]{2})|([1-9][0-9]{2}))$'
 host="${1}"
 
 # Link to jc and jq on GitHub
-jcuri='https://github.com/kellyjonbrazil/jc'
-jquri='https://github.com/stedolan/jq'
-jc_path_mtu="https://github.com/joelmeckert/jc-path-mtu"
+uri_jc='https://github.com/kellyjonbrazil/jc'
+uri_jq='https://github.com/stedolan/jq'
+uri_jc_path_mtu="https://github.com/joelmeckert/jc-path-mtu"
+
+ansi_normal="\e[0m"
+ansi_bold="\e[1m"
+ansi_red="\e[31m"
+ansi_blue="\e[4m"
+ansi_under="\e[34m"
+cons_err="${ansi_red}${ansi_bold}"
+cons_uri="${ansi_bold}${ansi_under}${ansi_blue}"
 
 # Determines the location of jc, if it exists, sets the path to the jqpath variable
 jcpath=$(which jc)
 if [[ $? -ne 0 ]]; then
-	echo -e "\e[31m\e[1mERROR\t\e[0mjc not found\e[1m\t\e[34m\e[4m${jcuri}\e[0m" >&2
+	out_err="${out_err}${cons_err}ERROR\t${ansi_normal}jc not found\t${cons_uri}${uri_jc}${ansi_normal}\n"
 	exitflag=1
 fi
 
 # Determines the location of jq, if it exists, sets the path to the jqpath variable
 jqpath=$(which jq)
 if [[ $? -ne 0 ]]; then
-	echo -e "\e[31m\e[1mERROR\t\e[0mjq not found\e[1m\t\e[34m\e[4m${jquri}\e[0m" >&2
+	out_err="${out_err}${cons_err}ERROR\t${ansi_normal}jq not found\t${cons_uri}${uri_jq}${ansi_normal}\n"
 	exitflag=1
 fi
 
 if [[ $exitflag -eq 1 ]]; then
-	echo -e "\t\e[1mjc-path-mtu\t\e[1m\e[34m\e[4m${jc_path_mtu}\e[0m" >&2
+	out_err="${out_err}${ansi_bold}jc-path-mtu\t\t${cons_uri}${uri_jc_path_mtu}${ansi_normal}"
+	echo -e "${out_err}" >&2
 	exit 1
 fi
 
@@ -66,8 +77,10 @@ lost=$(($egress - $ingress))
 # If MTU is specified as the second argument, calculate overhead, if not specified, calculate overhead based on max MTU
 if [[ "${2}" =~ $rx_mtu ]]; then
 	bytes=$(($2 - $overhead))
+	start=$2
 else
 	bytes=$(($mtu_maximum - $overhead))
+	start=$mtu_maximum
 fi
 
 # If the host responds to ICMP, proceed with the tests
@@ -126,7 +139,12 @@ fi
 datetime=$(date -d @$epoch +"%Y-%m-%dT%T%:z")
 
 # Create JSON
-json=$(echo -e '{'"\n\t"'"date": "'$datetime'"'",\n\t"'"host": "'$host'"'",\n\t"'"mtu": '"$mtu,\n\t"'"timeout": '"$timeout,\n\t"'"epoch": '"$epoch\n"'}'"\n")
+json=$(echo -e '{'"\n\t"'"date": "'$datetime'"'",\n\
+	\t"'"host": "'$host'"'",\n\
+	\t"'"mtu": '"$mtu,\n\
+	\t"'"start": '"$start,\n\
+	\t"'"timeout": '"$timeout,\n\
+	\t"'"epoch": '"$epoch\n"'}'"\n")
 
 # Output to stdout via jq
 echo "${json}" | jq
