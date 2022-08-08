@@ -46,6 +46,19 @@ ansi_under="\e[34m"
 cons_err="${ansi_red}${ansi_bold}"
 cons_uri="${ansi_bold}${ansi_under}${ansi_blue}"
 
+# Determines if first argument is null, displays help text
+if [[ -z "${1}" ]]; then
+	out_err="${out_err}jc-path-mtu usage:\n  ./jc-path-mtu.sh contoso.com\n  ./jc-path-mtu.sh contoso.com 1450\n  ./jc-path-mtu.sh contoso.com 1492 0.05\n  ./jc-path-mtu.sh 1.1.1.1\n  ./jc-path-mtu.sh contoso.com | jq .mtu${ansi_normal}\n"
+	exitflag=1
+fi
+
+# Determines if hostname or IP address can be resolved
+nslookup "${host}" > /dev/null
+if [[ $? -ne 0 ]]; then
+	out_err="${out_err}${cons_err}ERROR\t${ansi_normal}Hostname or IP could not be resolved${ansi_normal}\n"
+	exitflag=1
+fi
+
 # Determines the location of jc, if it exists, sets the path to the jqpath variable
 jcpath=$(which jc)
 if [[ $? -ne 0 ]]; then
