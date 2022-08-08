@@ -23,4 +23,4 @@ bash, jq, and jc
 - https://github.com/kellyjonbrazil/jc
 
 # Notes
-I had attempted to use nmap, but some providers block ICMP types other than echo requests. An MTU change anywhere in the path can destroy IPSec VPNs over UDP.
+I had attempted to use nmap, but some providers block ICMP types other than echo requests. An MTU change anywhere in the path can destroy IPSec VPNs over UDP, and it is something that chewed away days worth of my time in one instance.
