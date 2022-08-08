@@ -7,12 +7,17 @@ Bash script to find the MTU of a remote host, outputs to JSON, conceptually desi
 ./jc-path-mtu.sh contoso.com 1492
 ./jc-path-mtu.sh contoso.com 1500 0.2
 ./jc-path-mtu.sh contoso.com 1450 .05
+./jc-path-mtu.sh 1.1.1.1
+```
+# Raw output
+```
+./jc-path-mtu.sh 1.1.1.1 | jq .mtu
 ```
 
 # Dependencies
-jq and jc
+bash, jq, and jc
 - https://github.com/stedolan/jq
 - https://github.com/kellyjonbrazil/jc
 
 # Notes
-I had attempted to use nmap, but some providers block ICMP types other than echo requests.
+I had attempted to use nmap, but some providers block ICMP types other than echo requests. An MTU change anywhere in the path can destroy IPSec VPNs over UDP.
